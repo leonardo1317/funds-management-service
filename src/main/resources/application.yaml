@@ -1,0 +1,7 @@
+spring:
+  application:
+    name: funds-service
+  data:
+    mongodb:
+      uri: ${MONGODB_URI:mongodb://localhost:27017/funds_db?replicaSet=rs0}
+      uuid-representation: standard
