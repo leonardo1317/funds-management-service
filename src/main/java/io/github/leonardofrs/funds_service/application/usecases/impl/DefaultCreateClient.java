@@ -1,20 +1,20 @@
 package io.github.leonardofrs.funds_service.application.usecases.impl;
 
 import io.github.leonardofrs.funds_service.application.usecases.CreateClient;
-import io.github.leonardofrs.funds_service.domain.model.Client;
-import io.github.leonardofrs.funds_service.domain.repository.CreateClientRepository;
+import io.github.leonardofrs.funds_service.domain.models.Client;
+import io.github.leonardofrs.funds_service.domain.gateway.client.CreateClientGateway;
 
 public class DefaultCreateClient implements CreateClient {
 
-  private final CreateClientRepository createClientRepository;
+  private final CreateClientGateway createClientGateway;
 
-  public DefaultCreateClient(CreateClientRepository createClientRepository) {
-    this.createClientRepository = createClientRepository;
+  public DefaultCreateClient(CreateClientGateway createClientGateway) {
+    this.createClientGateway = createClientGateway;
   }
 
   @Override
   public Client execute(Client client) {
 
-    return createClientRepository.execute(client);
+    return createClientGateway.execute(client);
   }
 }

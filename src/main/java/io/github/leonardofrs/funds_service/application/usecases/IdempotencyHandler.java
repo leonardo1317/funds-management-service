@@ -1,0 +1,8 @@
+package io.github.leonardofrs.funds_service.application.usecases;
+
+import java.util.function.Supplier;
+
+public interface IdempotencyHandler {
+
+  <T> T execute(String key, String service, Supplier<T> operation, Class<T> responseType);
+}

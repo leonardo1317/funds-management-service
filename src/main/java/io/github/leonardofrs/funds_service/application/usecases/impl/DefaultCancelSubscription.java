@@ -6,53 +6,57 @@ import static java.util.Objects.requireNonNull;
 
 import io.github.leonardofrs.funds_service.application.usecases.CancelSubscription;
 import io.github.leonardofrs.funds_service.domain.constants.SubscriptionStatus;
-import io.github.leonardofrs.funds_service.domain.dto.CancelSubscriptionData;
+import io.github.leonardofrs.funds_service.application.dto.CancelSubscriptionData;
 import io.github.leonardofrs.funds_service.domain.exceptions.BusinessRuleException;
-import io.github.leonardofrs.funds_service.domain.model.Client;
-import io.github.leonardofrs.funds_service.domain.model.Subscription;
-import io.github.leonardofrs.funds_service.domain.model.Transaction;
-import io.github.leonardofrs.funds_service.domain.repository.CreateTransactionRepository;
-import io.github.leonardofrs.funds_service.domain.repository.RetrieveClientRepository;
-import io.github.leonardofrs.funds_service.domain.repository.RetrieveSubscriptionRepository;
-import io.github.leonardofrs.funds_service.domain.repository.TransactionalHandler;
-import io.github.leonardofrs.funds_service.domain.repository.UpdateClientRepository;
-import io.github.leonardofrs.funds_service.domain.repository.CancelSubscriptionRepository;
+import io.github.leonardofrs.funds_service.domain.gateway.notification.SendNotificationGateway;
+import io.github.leonardofrs.funds_service.domain.models.Client;
+import io.github.leonardofrs.funds_service.domain.models.Subscription;
+import io.github.leonardofrs.funds_service.domain.models.Transaction;
+import io.github.leonardofrs.funds_service.domain.gateway.transactions.CreateTransactionGateway;
+import io.github.leonardofrs.funds_service.domain.gateway.client.RetrieveClientGateway;
+import io.github.leonardofrs.funds_service.domain.gateway.subscription.RetrieveSubscriptionGateway;
+import io.github.leonardofrs.funds_service.domain.gateway.TransactionalHandlerGateway;
+import io.github.leonardofrs.funds_service.domain.gateway.client.UpdateClientGateway;
+import io.github.leonardofrs.funds_service.domain.gateway.subscription.CancelSubscriptionGateway;
 import java.util.UUID;
 
 public class DefaultCancelSubscription implements CancelSubscription {
 
-  private final RetrieveSubscriptionRepository retrieveSubscriptionRepository;
-  private final RetrieveClientRepository retrieveClientRepository;
-  private final UpdateClientRepository updateClientRepository;
-  private final CancelSubscriptionRepository cancelSubscriptionRepository;
-  private final CreateTransactionRepository createTransactionRepository;
-  private final TransactionalHandler transactionalHandler;
+  private final RetrieveSubscriptionGateway retrieveSubscriptionGateway;
+  private final RetrieveClientGateway retrieveClientGateway;
+  private final UpdateClientGateway updateClientGateway;
+  private final CancelSubscriptionGateway cancelSubscriptionGateway;
+  private final CreateTransactionGateway createTransactionGateway;
+  private final TransactionalHandlerGateway transactionalHandlerGateway;
+  private final SendNotificationGateway sendNotificationGateway;
 
   public DefaultCancelSubscription(
-      RetrieveSubscriptionRepository retrieveSubscriptionRepository,
-      RetrieveClientRepository retrieveClientRepository,
-      UpdateClientRepository updateClientRepository,
-      CancelSubscriptionRepository cancelSubscriptionRepository,
-      CreateTransactionRepository createTransactionRepository,
-      TransactionalHandler transactionalHandler
+      RetrieveSubscriptionGateway retrieveSubscriptionGateway,
+      RetrieveClientGateway retrieveClientGateway,
+      UpdateClientGateway updateClientGateway,
+      CancelSubscriptionGateway cancelSubscriptionGateway,
+      CreateTransactionGateway createTransactionGateway,
+      TransactionalHandlerGateway transactionalHandlerGateway,
+      SendNotificationGateway sendNotificationGateway
   ) {
-    this.retrieveSubscriptionRepository = retrieveSubscriptionRepository;
-    this.retrieveClientRepository = retrieveClientRepository;
-    this.updateClientRepository = updateClientRepository;
-    this.cancelSubscriptionRepository = cancelSubscriptionRepository;
-    this.createTransactionRepository = createTransactionRepository;
-    this.transactionalHandler = transactionalHandler;
+    this.retrieveSubscriptionGateway = retrieveSubscriptionGateway;
+    this.retrieveClientGateway = retrieveClientGateway;
+    this.updateClientGateway = updateClientGateway;
+    this.cancelSubscriptionGateway = cancelSubscriptionGateway;
+    this.createTransactionGateway = createTransactionGateway;
+    this.transactionalHandlerGateway = transactionalHandlerGateway;
+    this.sendNotificationGateway = sendNotificationGateway;
   }
 
   @Override
   public Subscription execute(UUID clientId, UUID subscriptionId,
       CancelSubscriptionData cancelSubscriptionData) {
     requireNonNull(cancelSubscriptionData);
-    Subscription subscription = retrieveSubscriptionRepository.execute(clientId, subscriptionId);
-    Client client = retrieveClientRepository.execute(clientId);
+    Subscription subscription = retrieveSubscriptionGateway.execute(clientId, subscriptionId);
+    Client client = retrieveClientGateway.execute(clientId);
 
     try {
-      return transactionalHandler.execute(() -> persistCancelSuccess(client, subscription,
+      return transactionalHandlerGateway.execute(() -> persistCancelSuccess(client, subscription,
           cancelSubscriptionData.cancellationReason()));
 
     } catch (BusinessRuleException e) {
@@ -67,7 +71,7 @@ public class DefaultCancelSubscription implements CancelSubscription {
           e.getMessage()
       );
 
-      createTransactionRepository.execute(transaction);
+      createTransactionGateway.execute(transaction);
       throw e;
     }
   }
@@ -90,9 +94,9 @@ public class DefaultCancelSubscription implements CancelSubscription {
         updatedClient.balance()
     );
 
-    cancelSubscriptionRepository.execute(cancelledSubscription, previousStatus);
-    updateClientRepository.execute(updatedClient);
-    createTransactionRepository.execute(transaction);
+    cancelSubscriptionGateway.execute(cancelledSubscription, previousStatus);
+    updateClientGateway.execute(updatedClient);
+    createTransactionGateway.execute(transaction);
 
     return cancelledSubscription;
   }

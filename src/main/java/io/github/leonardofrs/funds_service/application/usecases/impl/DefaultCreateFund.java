@@ -1,20 +1,20 @@
 package io.github.leonardofrs.funds_service.application.usecases.impl;
 
 import io.github.leonardofrs.funds_service.application.usecases.CreateFund;
-import io.github.leonardofrs.funds_service.domain.model.Fund;
-import io.github.leonardofrs.funds_service.domain.repository.CreateFundRepository;
+import io.github.leonardofrs.funds_service.domain.models.Fund;
+import io.github.leonardofrs.funds_service.domain.gateway.fund.CreateFundGateway;
 
 public class DefaultCreateFund implements CreateFund {
 
-  private final CreateFundRepository createFundRepository;
+  private final CreateFundGateway createFundGateway;
 
-  public DefaultCreateFund(CreateFundRepository createFundRepository) {
-    this.createFundRepository = createFundRepository;
+  public DefaultCreateFund(CreateFundGateway createFundGateway) {
+    this.createFundGateway = createFundGateway;
   }
 
   @Override
   public Fund execute(Fund fund) {
 
-    return createFundRepository.execute(fund);
+    return createFundGateway.execute(fund);
   }
 }

@@ -1,10 +1,16 @@
 package io.github.leonardofrs.funds_service.infrastructure.controllers;
 
+import static io.github.leonardofrs.funds_service.infrastructure.controllers.constants.Services.SUBSCRIPTION;
+
+import io.github.leonardofrs.funds_service.application.dto.CancelSubscriptionData;
+import io.github.leonardofrs.funds_service.application.dto.CreateSubscriptionData;
 import io.github.leonardofrs.funds_service.application.usecases.CancelSubscription;
 import io.github.leonardofrs.funds_service.application.usecases.CreateSubscription;
-import io.github.leonardofrs.funds_service.domain.model.Subscription;
+import io.github.leonardofrs.funds_service.application.usecases.IdempotencyHandler;
+import io.github.leonardofrs.funds_service.domain.models.Subscription;
 import io.github.leonardofrs.funds_service.infrastructure.controllers.contract.CancelSubscriptionRequest;
 import io.github.leonardofrs.funds_service.infrastructure.controllers.contract.CreateSubscriptionRequest;
+import io.github.leonardofrs.funds_service.infrastructure.controllers.contract.SubscriptionResponse;
 import io.github.leonardofrs.funds_service.infrastructure.mappers.SubscriptionMapper;
 import java.util.UUID;
 import org.springframework.http.ResponseEntity;
@@ -21,31 +27,57 @@ public class SubscriptionController {
 
   private final CreateSubscription createSubscription;
   private final CancelSubscription cancelSubscription;
+  private final IdempotencyHandler idempotencyHandler;
   private final SubscriptionMapper subscriptionMapper;
 
   public SubscriptionController(
       CreateSubscription createSubscription,
       CancelSubscription cancelSubscription,
+      IdempotencyHandler idempotencyHandler,
       SubscriptionMapper subscriptionMapper
   ) {
     this.createSubscription = createSubscription;
     this.cancelSubscription = cancelSubscription;
+    this.idempotencyHandler = idempotencyHandler;
     this.subscriptionMapper = subscriptionMapper;
   }
 
   @PostMapping
-  public ResponseEntity<Subscription> subscribe(
+  public ResponseEntity<SubscriptionResponse> subscribe(
+      @RequestHeader("idempotency-key") String idempotencyKey,
       @RequestHeader("X-Client-Id") UUID clientId,
       @RequestBody CreateSubscriptionRequest createSubscriptionRequest) {
-    return ResponseEntity.ok(createSubscription.execute(clientId,
-        subscriptionMapper.toCreateSubscriptionData(createSubscriptionRequest)));
+
+    CreateSubscriptionData createSubscriptionData = subscriptionMapper.toCreateSubscriptionData(
+        createSubscriptionRequest);
+
+    Subscription savedSubscription = idempotencyHandler.execute(
+        idempotencyKey,
+        SUBSCRIPTION.name(),
+        () -> createSubscription.execute(clientId, createSubscriptionData),
+        Subscription.class
+    );
+
+    return ResponseEntity.ok(subscriptionMapper.toSubscriptionResponse(savedSubscription));
+
   }
 
   @PostMapping("/{subscriptionId}/cancel")
-  public ResponseEntity<Subscription> cancel(
+  public ResponseEntity<SubscriptionResponse> cancel(
+      @RequestHeader("idempotency-key") String idempotencyKey,
       @RequestHeader("X-Client-Id") UUID clientId,
       @PathVariable UUID subscriptionId,
       @RequestBody CancelSubscriptionRequest cancelSubscriptionRequest) {
-    return ResponseEntity.ok(cancelSubscription.execute(clientId, subscriptionId, subscriptionMapper.toCancelSubscriptionData(cancelSubscriptionRequest)));
+    CancelSubscriptionData cancelSubscriptionData = subscriptionMapper.toCancelSubscriptionData(
+        cancelSubscriptionRequest);
+
+    Subscription savedSubscription = idempotencyHandler.execute(
+        idempotencyKey,
+        SUBSCRIPTION.name(),
+        () -> cancelSubscription.execute(clientId, subscriptionId, cancelSubscriptionData),
+        Subscription.class
+    );
+
+    return ResponseEntity.ok(subscriptionMapper.toSubscriptionResponse(savedSubscription));
   }
 }

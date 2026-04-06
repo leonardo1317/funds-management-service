@@ -4,88 +4,113 @@ import io.github.leonardofrs.funds_service.application.usecases.CancelSubscripti
 import io.github.leonardofrs.funds_service.application.usecases.CreateClient;
 import io.github.leonardofrs.funds_service.application.usecases.CreateFund;
 import io.github.leonardofrs.funds_service.application.usecases.CreateSubscription;
-import io.github.leonardofrs.funds_service.application.usecases.RetrieveTransactionHistory;
+import io.github.leonardofrs.funds_service.application.usecases.IdempotencyHandler;
+import io.github.leonardofrs.funds_service.application.usecases.RetrieveTransactions;
+import io.github.leonardofrs.funds_service.application.usecases.SendNotification;
 import io.github.leonardofrs.funds_service.application.usecases.impl.DefaultCancelSubscription;
 import io.github.leonardofrs.funds_service.application.usecases.impl.DefaultCreateClient;
 import io.github.leonardofrs.funds_service.application.usecases.impl.DefaultCreateFund;
 import io.github.leonardofrs.funds_service.application.usecases.impl.DefaultCreateSubscription;
-import io.github.leonardofrs.funds_service.application.usecases.impl.DefaultRetrieveTransactionHistory;
-import io.github.leonardofrs.funds_service.domain.repository.CheckSubscriptionRepository;
-import io.github.leonardofrs.funds_service.domain.repository.CreateClientRepository;
-import io.github.leonardofrs.funds_service.domain.repository.CreateFundRepository;
-import io.github.leonardofrs.funds_service.domain.repository.CreateSubscriptionRepository;
-import io.github.leonardofrs.funds_service.domain.repository.CreateTransactionRepository;
-import io.github.leonardofrs.funds_service.domain.repository.RetrieveClientRepository;
-import io.github.leonardofrs.funds_service.domain.repository.RetrieveFundRepository;
-import io.github.leonardofrs.funds_service.domain.repository.RetrieveSubscriptionRepository;
-import io.github.leonardofrs.funds_service.domain.repository.RetrieveTransactionHistoryRepository;
-import io.github.leonardofrs.funds_service.domain.repository.TransactionalHandler;
-import io.github.leonardofrs.funds_service.domain.repository.UpdateClientRepository;
-import io.github.leonardofrs.funds_service.domain.repository.CancelSubscriptionRepository;
+import io.github.leonardofrs.funds_service.application.usecases.impl.DefaultIdempotencyHandler;
+import io.github.leonardofrs.funds_service.application.usecases.impl.DefaultRetrieveTransactions;
+import io.github.leonardofrs.funds_service.application.usecases.impl.DefaultSendNotification;
+import io.github.leonardofrs.funds_service.domain.gateway.Idempotency.CreateIdempotencyGateway;
+import io.github.leonardofrs.funds_service.domain.gateway.Idempotency.RetrieveIdempotencyGateway;
+import io.github.leonardofrs.funds_service.domain.gateway.Idempotency.UpdateIdempotencyGateway;
+import io.github.leonardofrs.funds_service.domain.gateway.JsonSerializerGateway;
+import io.github.leonardofrs.funds_service.domain.gateway.subscription.CheckSubscriptionGateway;
+import io.github.leonardofrs.funds_service.domain.gateway.transactions.CountTransactionsGateway;
+import io.github.leonardofrs.funds_service.domain.gateway.client.CreateClientGateway;
+import io.github.leonardofrs.funds_service.domain.gateway.fund.CreateFundGateway;
+import io.github.leonardofrs.funds_service.domain.gateway.subscription.CreateSubscriptionGateway;
+import io.github.leonardofrs.funds_service.domain.gateway.transactions.CreateTransactionGateway;
+import io.github.leonardofrs.funds_service.domain.gateway.notification.SendNotificationGateway;
+import io.github.leonardofrs.funds_service.domain.gateway.client.RetrieveClientGateway;
+import io.github.leonardofrs.funds_service.domain.gateway.fund.RetrieveFundGateway;
+import io.github.leonardofrs.funds_service.domain.gateway.subscription.RetrieveSubscriptionGateway;
+import io.github.leonardofrs.funds_service.domain.gateway.transactions.RetrieveTransactionsGateway;
+import io.github.leonardofrs.funds_service.domain.gateway.TransactionalHandlerGateway;
+import io.github.leonardofrs.funds_service.domain.gateway.client.UpdateClientGateway;
+import io.github.leonardofrs.funds_service.domain.gateway.subscription.CancelSubscriptionGateway;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.data.mongodb.MongoDatabaseFactory;
-import org.springframework.data.mongodb.MongoTransactionManager;
 
 @Configuration
 public class BeanConfig {
 
   @Bean
   public CreateSubscription createSubscription(
-      RetrieveClientRepository retrieveClientRepository,
-      RetrieveFundRepository retrieveFundRepository,
-      CheckSubscriptionRepository checkSubscriptionRepository,
-      UpdateClientRepository updateClientRepository,
-      CreateSubscriptionRepository createSubscriptionRepository,
-      CreateTransactionRepository createTransactionRepository,
-      TransactionalHandler transactionalHandler
+      RetrieveClientGateway retrieveClientGateway,
+      RetrieveFundGateway retrieveFundGateway,
+      CheckSubscriptionGateway checkSubscriptionGateway,
+      UpdateClientGateway updateClientGateway,
+      CreateSubscriptionGateway createSubscriptionGateway,
+      CreateTransactionGateway createTransactionGateway,
+      TransactionalHandlerGateway transactionalHandlerGateway,
+      SendNotification sendNotification
   ) {
     return new DefaultCreateSubscription(
-        retrieveClientRepository,
-        retrieveFundRepository,
-        checkSubscriptionRepository,
-        updateClientRepository,
-        createSubscriptionRepository,
-        createTransactionRepository,
-        transactionalHandler);
+        retrieveClientGateway,
+        retrieveFundGateway,
+        checkSubscriptionGateway,
+        updateClientGateway,
+        createSubscriptionGateway,
+        createTransactionGateway,
+        transactionalHandlerGateway,
+        sendNotification
+    );
   }
 
   @Bean
   public CancelSubscription cancelSubscription(
-      RetrieveSubscriptionRepository retrieveSubscriptionRepository,
-      RetrieveClientRepository retrieveClientRepository,
-      UpdateClientRepository updateClientRepository,
-      CancelSubscriptionRepository cancelSubscriptionRepository,
-      CreateTransactionRepository createTransactionRepository,
-      TransactionalHandler transactionalHandler
+      RetrieveSubscriptionGateway retrieveSubscriptionGateway,
+      RetrieveClientGateway retrieveClientGateway,
+      UpdateClientGateway updateClientGateway,
+      CancelSubscriptionGateway cancelSubscriptionGateway,
+      CreateTransactionGateway createTransactionGateway,
+      TransactionalHandlerGateway transactionalHandlerGateway,
+      SendNotificationGateway sendNotificationGateway
   ) {
     return new DefaultCancelSubscription(
-        retrieveSubscriptionRepository,
-        retrieveClientRepository,
-        updateClientRepository,
-        cancelSubscriptionRepository,
-        createTransactionRepository,
-        transactionalHandler);
+        retrieveSubscriptionGateway,
+        retrieveClientGateway,
+        updateClientGateway,
+        cancelSubscriptionGateway,
+        createTransactionGateway,
+        transactionalHandlerGateway,
+        sendNotificationGateway
+    );
   }
 
   @Bean
-  public RetrieveTransactionHistory retrieveTransactionHistory(
-      RetrieveTransactionHistoryRepository retrieveTransactionHistoryRepository) {
-    return new DefaultRetrieveTransactionHistory(retrieveTransactionHistoryRepository);
+  public RetrieveTransactions retrieveTransactionHistory(
+      RetrieveTransactionsGateway retrieveTransactionsGateway,
+      CountTransactionsGateway countTransactionsGateway) {
+    return new DefaultRetrieveTransactions(retrieveTransactionsGateway,
+        countTransactionsGateway);
   }
 
   @Bean
-  public CreateClient createClient(CreateClientRepository createClientRepository) {
-    return new DefaultCreateClient(createClientRepository);
+  public CreateClient createClient(CreateClientGateway createClientGateway) {
+    return new DefaultCreateClient(createClientGateway);
   }
 
   @Bean
-  public CreateFund createFund(CreateFundRepository createFundRepository) {
-    return new DefaultCreateFund(createFundRepository);
+  public CreateFund createFund(CreateFundGateway createFundGateway) {
+    return new DefaultCreateFund(createFundGateway);
   }
 
   @Bean
-  public MongoTransactionManager transactionManager(MongoDatabaseFactory dbFactory) {
-    return new MongoTransactionManager(dbFactory);
+  public SendNotification sendNotification(SendNotificationGateway sendNotificationGateway) {
+    return new DefaultSendNotification(sendNotificationGateway);
+  }
+
+  @Bean
+  public IdempotencyHandler idempotencyHandler(CreateIdempotencyGateway createIdempotencyGateway,
+      RetrieveIdempotencyGateway retrieveIdempotencyGateway,
+      UpdateIdempotencyGateway updateIdempotencyGateway,
+      JsonSerializerGateway jsonSerializerGateway) {
+    return new DefaultIdempotencyHandler(createIdempotencyGateway, retrieveIdempotencyGateway,
+        updateIdempotencyGateway, jsonSerializerGateway);
   }
 }

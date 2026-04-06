@@ -5,67 +5,76 @@ import static io.github.leonardofrs.funds_service.domain.constants.TransactionTy
 import static java.util.Objects.requireNonNull;
 
 import io.github.leonardofrs.funds_service.application.usecases.CreateSubscription;
-import io.github.leonardofrs.funds_service.domain.dto.CreateSubscriptionData;
+import io.github.leonardofrs.funds_service.application.dto.CreateSubscriptionData;
+import io.github.leonardofrs.funds_service.application.usecases.SendNotification;
 import io.github.leonardofrs.funds_service.domain.exceptions.BusinessRuleException;
-import io.github.leonardofrs.funds_service.domain.model.Client;
-import io.github.leonardofrs.funds_service.domain.model.Fund;
-import io.github.leonardofrs.funds_service.domain.model.Subscription;
-import io.github.leonardofrs.funds_service.domain.model.Transaction;
-import io.github.leonardofrs.funds_service.domain.repository.CheckSubscriptionRepository;
-import io.github.leonardofrs.funds_service.domain.repository.CreateSubscriptionRepository;
-import io.github.leonardofrs.funds_service.domain.repository.CreateTransactionRepository;
-import io.github.leonardofrs.funds_service.domain.repository.RetrieveClientRepository;
-import io.github.leonardofrs.funds_service.domain.repository.RetrieveFundRepository;
+import io.github.leonardofrs.funds_service.domain.models.Client;
+import io.github.leonardofrs.funds_service.domain.models.Fund;
+import io.github.leonardofrs.funds_service.domain.models.Subscription;
+import io.github.leonardofrs.funds_service.domain.models.Transaction;
+import io.github.leonardofrs.funds_service.domain.gateway.subscription.CheckSubscriptionGateway;
+import io.github.leonardofrs.funds_service.domain.gateway.subscription.CreateSubscriptionGateway;
+import io.github.leonardofrs.funds_service.domain.gateway.transactions.CreateTransactionGateway;
+import io.github.leonardofrs.funds_service.domain.gateway.client.RetrieveClientGateway;
+import io.github.leonardofrs.funds_service.domain.gateway.fund.RetrieveFundGateway;
 import io.github.leonardofrs.funds_service.domain.exceptions.AlreadySubscribedException;
-import io.github.leonardofrs.funds_service.domain.repository.TransactionalHandler;
-import io.github.leonardofrs.funds_service.domain.repository.UpdateClientRepository;
+import io.github.leonardofrs.funds_service.domain.gateway.TransactionalHandlerGateway;
+import io.github.leonardofrs.funds_service.domain.gateway.client.UpdateClientGateway;
 import java.math.BigDecimal;
 import java.util.UUID;
 
 public class DefaultCreateSubscription implements CreateSubscription {
 
-  private final RetrieveClientRepository retrieveClientRepository;
-  private final RetrieveFundRepository retrieveFundRepository;
-  private final CheckSubscriptionRepository checkSubscriptionRepository;
-  private final UpdateClientRepository updateClientRepository;
-  private final CreateSubscriptionRepository createSubscriptionRepository;
-  private final CreateTransactionRepository createTransactionRepository;
-  private final TransactionalHandler transactionalHandler;
+  private final RetrieveClientGateway retrieveClientGateway;
+  private final RetrieveFundGateway retrieveFundGateway;
+  private final CheckSubscriptionGateway checkSubscriptionGateway;
+  private final UpdateClientGateway updateClientGateway;
+  private final CreateSubscriptionGateway createSubscriptionGateway;
+  private final CreateTransactionGateway createTransactionGateway;
+  private final TransactionalHandlerGateway transactionalHandlerGateway;
+  private final SendNotification sendNotification;
 
   public DefaultCreateSubscription(
-      RetrieveClientRepository retrieveClientRepository,
-      RetrieveFundRepository retrieveFundRepository,
-      CheckSubscriptionRepository checkSubscriptionRepository,
-      UpdateClientRepository updateClientRepository,
-      CreateSubscriptionRepository createSubscriptionRepository,
-      CreateTransactionRepository createTransactionRepository,
-      TransactionalHandler transactionalHandler
+      RetrieveClientGateway retrieveClientGateway,
+      RetrieveFundGateway retrieveFundGateway,
+      CheckSubscriptionGateway checkSubscriptionGateway,
+      UpdateClientGateway updateClientGateway,
+      CreateSubscriptionGateway createSubscriptionGateway,
+      CreateTransactionGateway createTransactionGateway,
+      TransactionalHandlerGateway transactionalHandlerGateway,
+      SendNotification sendNotification
   ) {
-    this.retrieveClientRepository = retrieveClientRepository;
-    this.retrieveFundRepository = retrieveFundRepository;
-    this.checkSubscriptionRepository = checkSubscriptionRepository;
-    this.updateClientRepository = updateClientRepository;
-    this.createSubscriptionRepository = createSubscriptionRepository;
-    this.createTransactionRepository = createTransactionRepository;
-    this.transactionalHandler = transactionalHandler;
+    this.retrieveClientGateway = retrieveClientGateway;
+    this.retrieveFundGateway = retrieveFundGateway;
+    this.checkSubscriptionGateway = checkSubscriptionGateway;
+    this.updateClientGateway = updateClientGateway;
+    this.createSubscriptionGateway = createSubscriptionGateway;
+    this.createTransactionGateway = createTransactionGateway;
+    this.transactionalHandlerGateway = transactionalHandlerGateway;
+    this.sendNotification = sendNotification;
   }
 
   @Override
   public Subscription execute(UUID clientId, CreateSubscriptionData createSubscriptionData) {
     requireNonNull(createSubscriptionData);
-    Client client = retrieveClientRepository.execute(clientId);
-    Fund fund = retrieveFundRepository.execute(createSubscriptionData.fundId());
+    Client client = retrieveClientGateway.execute(clientId);
+    Fund fund = retrieveFundGateway.execute(createSubscriptionData.fundId());
     BigDecimal amount = createSubscriptionData.amount();
 
     try {
       fund.validateAmount(amount);
-      if (checkSubscriptionRepository.execute(client.id(), fund.id())) {
+      if (checkSubscriptionGateway.execute(client.id(), fund.id())) {
         throw new AlreadySubscribedException(
             String.format("Client %s is already linked to fund %s", client.id(), fund.name())
         );
       }
 
-      return transactionalHandler.execute(() -> persistSuccessSubscription(client, fund, amount));
+      Subscription subscription = transactionalHandlerGateway.execute(
+          () -> persistSuccessSubscription(client, fund, amount)
+      );
+
+      sendNotification.execute(client, fund, amount);
+      return subscription;
     } catch (BusinessRuleException e) {
       var transaction = Transaction.rejected(
           client.id(),
@@ -77,7 +86,7 @@ public class DefaultCreateSubscription implements CreateSubscription {
           client.balance(),
           e.getMessage()
       );
-      createTransactionRepository.execute(transaction);
+      createTransactionGateway.execute(transaction);
       throw e;
     }
   }
@@ -88,9 +97,9 @@ public class DefaultCreateSubscription implements CreateSubscription {
     var transaction = Transaction.success(client.id(), fund.id(), fund.name(),
         subscription.id(), SUBSCRIPTION, DEBIT, amount, client.balance(), updatedClient.balance());
 
-    createSubscriptionRepository.execute(subscription);
-    updateClientRepository.execute(updatedClient);
-    createTransactionRepository.execute(transaction);
+    createSubscriptionGateway.execute(subscription);
+    updateClientGateway.execute(updatedClient);
+    createTransactionGateway.execute(transaction);
 
     return subscription;
   }

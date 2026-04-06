@@ -1,12 +1,17 @@
 package io.github.leonardofrs.funds_service.infrastructure.controllers;
 
+import static io.github.leonardofrs.funds_service.infrastructure.controllers.constants.Services.CLIENT;
+
 import io.github.leonardofrs.funds_service.application.usecases.CreateClient;
-import io.github.leonardofrs.funds_service.domain.model.Client;
+import io.github.leonardofrs.funds_service.application.usecases.IdempotencyHandler;
+import io.github.leonardofrs.funds_service.domain.models.Client;
+import io.github.leonardofrs.funds_service.infrastructure.controllers.contract.ClientResponse;
 import io.github.leonardofrs.funds_service.infrastructure.controllers.contract.CreateClientRequest;
 import io.github.leonardofrs.funds_service.infrastructure.mappers.ClientMapper;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -15,21 +20,30 @@ import org.springframework.web.bind.annotation.RestController;
 public class ClientController {
 
   private final CreateClient createClient;
+  private final IdempotencyHandler idempotencyHandler;
   private final ClientMapper clientMapper;
 
   public ClientController(
-      CreateClient createClient,
+      CreateClient createClient, IdempotencyHandler idempotencyHandler,
       ClientMapper clientMapper
   ) {
     this.createClient = createClient;
+    this.idempotencyHandler = idempotencyHandler;
     this.clientMapper = clientMapper;
   }
 
   @PostMapping
-  public ResponseEntity<Client> create(
+  public ResponseEntity<ClientResponse> create(
+      @RequestHeader("idempotency-Key") String idempotencyKey,
       @RequestBody CreateClientRequest createClientRequest) {
-    return ResponseEntity.ok(
-        createClient.execute(clientMapper.toClient(createClientRequest)));
+    Client client = clientMapper.toClient(createClientRequest);
+    Client savedClient = idempotencyHandler.execute(
+        idempotencyKey,
+        CLIENT.name(),
+        () -> createClient.execute(client),
+        Client.class
+    );
+    return ResponseEntity.ok(clientMapper.toClientResponse(savedClient));
   }
 
 }

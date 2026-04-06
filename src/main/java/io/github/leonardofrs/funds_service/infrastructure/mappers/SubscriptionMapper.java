@@ -1,11 +1,12 @@
 package io.github.leonardofrs.funds_service.infrastructure.mappers;
 
-import io.github.leonardofrs.funds_service.domain.dto.CancelSubscriptionData;
-import io.github.leonardofrs.funds_service.domain.dto.CreateSubscriptionData;
-import io.github.leonardofrs.funds_service.domain.model.Subscription;
+import io.github.leonardofrs.funds_service.application.dto.CancelSubscriptionData;
+import io.github.leonardofrs.funds_service.application.dto.CreateSubscriptionData;
+import io.github.leonardofrs.funds_service.domain.models.Subscription;
 import io.github.leonardofrs.funds_service.infrastructure.controllers.contract.CancelSubscriptionRequest;
 import io.github.leonardofrs.funds_service.infrastructure.controllers.contract.CreateSubscriptionRequest;
-import io.github.leonardofrs.funds_service.infrastructure.repository.mongodb.document.SubscriptionDocument;
+import io.github.leonardofrs.funds_service.infrastructure.controllers.contract.SubscriptionResponse;
+import io.github.leonardofrs.funds_service.infrastructure.gateway.documents.SubscriptionDocument;
 import org.mapstruct.Mapper;
 
 @Mapper(componentModel = "spring")
@@ -20,4 +21,6 @@ public interface SubscriptionMapper {
 
   CancelSubscriptionData toCancelSubscriptionData(
       CancelSubscriptionRequest cancelSubscriptionRequest);
+
+  SubscriptionResponse toSubscriptionResponse(Subscription subscription);
 }

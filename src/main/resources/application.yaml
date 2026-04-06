@@ -5,3 +5,12 @@ spring:
     mongodb:
       uri: ${MONGODB_URI:mongodb://localhost:27017/funds_db?replicaSet=rs0}
       uuid-representation: standard
+      auto-index-creation: true
+
+springdoc:
+  api-docs:
+    enabled: true
+  swagger-ui:
+    path: /docs
+    url: /openapi/openapi.yaml
+    disable-swagger-default-url: true
