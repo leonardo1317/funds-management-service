@@ -17,7 +17,7 @@ import io.github.leonardofrs.funds_service.application.usecases.impl.DefaultSend
 import io.github.leonardofrs.funds_service.domain.gateway.Idempotency.CreateIdempotencyGateway;
 import io.github.leonardofrs.funds_service.domain.gateway.Idempotency.RetrieveIdempotencyGateway;
 import io.github.leonardofrs.funds_service.domain.gateway.Idempotency.UpdateIdempotencyGateway;
-import io.github.leonardofrs.funds_service.domain.gateway.JsonSerializerGateway;
+import io.github.leonardofrs.funds_service.domain.gateway.ObjectSerializerGateway;
 import io.github.leonardofrs.funds_service.domain.gateway.subscription.CheckSubscriptionGateway;
 import io.github.leonardofrs.funds_service.domain.gateway.transactions.CountTransactionsGateway;
 import io.github.leonardofrs.funds_service.domain.gateway.client.CreateClientGateway;
@@ -109,8 +109,8 @@ public class BeanConfig {
   public IdempotencyHandler idempotencyHandler(CreateIdempotencyGateway createIdempotencyGateway,
       RetrieveIdempotencyGateway retrieveIdempotencyGateway,
       UpdateIdempotencyGateway updateIdempotencyGateway,
-      JsonSerializerGateway jsonSerializerGateway) {
+      ObjectSerializerGateway objectSerializerGateway) {
     return new DefaultIdempotencyHandler(createIdempotencyGateway, retrieveIdempotencyGateway,
-        updateIdempotencyGateway, jsonSerializerGateway);
+        updateIdempotencyGateway, objectSerializerGateway);
   }
 }

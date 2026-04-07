@@ -1,11 +1,11 @@
 package io.github.leonardofrs.funds_service.infrastructure.gateway;
 
-import io.github.leonardofrs.funds_service.domain.gateway.JsonSerializerGateway;
+import io.github.leonardofrs.funds_service.domain.gateway.ObjectSerializerGateway;
 import org.springframework.stereotype.Component;
 import tools.jackson.databind.ObjectMapper;
 
 @Component
-public class DefaultJsonSerializerGateway implements JsonSerializerGateway {
+public class DefaultJsonSerializerGateway implements ObjectSerializerGateway {
 
   private final ObjectMapper objectMapper;
 

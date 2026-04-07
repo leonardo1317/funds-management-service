@@ -1,6 +1,6 @@
 package io.github.leonardofrs.funds_service.domain.gateway;
 
-public interface JsonSerializerGateway {
+public interface ObjectSerializerGateway {
 
   String serialize(Object object);
 

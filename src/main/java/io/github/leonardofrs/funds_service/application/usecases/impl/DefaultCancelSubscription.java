@@ -63,16 +63,9 @@ public class DefaultCancelSubscription implements CancelSubscription {
           currentSubscription.amount());
       return currentSubscription;
     } catch (BusinessRuleException e) {
-      var transaction = Transaction.rejected(
-          clientId,
-          subscription.fundId(),
-          subscription.fundName(),
-          CANCELLATION,
-          CREDIT,
-          subscription.amount(),
-          client.balance(),
-          e.getMessage()
-      );
+      var transaction = Transaction.rejected(clientId, subscription.fundId(),
+          subscription.fundName(), CANCELLATION, CREDIT, subscription.amount(), client.balance(),
+          e.getMessage());
 
       createTransactionGateway.execute(transaction);
       throw e;
@@ -85,17 +78,9 @@ public class DefaultCancelSubscription implements CancelSubscription {
     Subscription cancelledSubscription = subscription.cancel(cancellationReason);
     Client updatedClient = client.credit(subscription.amount());
 
-    var transaction = Transaction.success(
-        client.id(),
-        subscription.fundId(),
-        subscription.fundName(),
-        subscription.id(),
-        CANCELLATION,
-        CREDIT,
-        subscription.amount(),
-        client.balance(),
-        updatedClient.balance()
-    );
+    var transaction = Transaction.success(client.id(), subscription.fundId(),
+        subscription.fundName(), subscription.id(), CANCELLATION, CREDIT, subscription.amount(),
+        client.balance(), updatedClient.balance());
 
     cancelSubscriptionGateway.execute(cancelledSubscription, previousStatus);
     updateClientGateway.execute(updatedClient, client.version());

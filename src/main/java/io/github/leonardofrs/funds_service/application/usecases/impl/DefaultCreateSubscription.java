@@ -76,15 +76,8 @@ public class DefaultCreateSubscription implements CreateSubscription {
       sendNotification.execute(client, fund.name(), amount);
       return currentSubscription;
     } catch (BusinessRuleException e) {
-      var transaction = Transaction.rejected(
-          client.id(),
-          fund.id(),
-          fund.name(),
-          SUBSCRIPTION,
-          DEBIT,
-          amount,
-          client.balance(),
-          e.getMessage()
+      var transaction = Transaction.rejected(client.id(), fund.id(), fund.name(), SUBSCRIPTION,
+          DEBIT, amount, client.balance(), e.getMessage()
       );
       createTransactionGateway.execute(transaction);
       throw e;
@@ -103,4 +96,5 @@ public class DefaultCreateSubscription implements CreateSubscription {
 
     return subscription;
   }
+
 }

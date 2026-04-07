@@ -31,24 +31,24 @@ public class DefaultCreateClientGateway implements CreateClientGateway {
     try {
       var clientDocument = mapper.toClientDocument(client);
       return mapper.toClient(mongoTemplate.insert(clientDocument));
-    } catch (DuplicateKeyException ex) {
-      if (isDuplicateKeyError(ex)) {
-        throw handleSpecificDuplicateKey(ex, client);
+    } catch (DuplicateKeyException e) {
+      if (isDuplicateKeyError(e)) {
+        throw handleSpecificDuplicateKey(e, client);
       }
 
-      throw new PersistenceException("Unexpected error saving client", ex);
+      throw new PersistenceException("Unexpected error saving client", e);
     }
   }
 
-  private boolean isDuplicateKeyError(DuplicateKeyException ex) {
-    if (ex.getCause() instanceof MongoWriteException mongoWriteEx) {
+  private boolean isDuplicateKeyError(DuplicateKeyException e) {
+    if (e.getCause() instanceof MongoWriteException mongoWriteEx) {
       return mongoWriteEx.getError().getCode() == MONGO_DUPLICATE_KEY_CODE;
     }
     return false;
   }
 
-  private ConflictException handleSpecificDuplicateKey(DuplicateKeyException ex, Client client) {
-    String message = ex.getMessage();
+  private ConflictException handleSpecificDuplicateKey(DuplicateKeyException e, Client client) {
+    String message = e.getMessage();
 
     if (message.contains("uk_clients_email")) {
       return new EmailAlreadyExistsException(

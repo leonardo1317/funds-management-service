@@ -1,5 +1,7 @@
 package io.github.leonardofrs.funds_service.application.usecases.impl;
 
+import static java.util.Objects.requireNonNull;
+
 import io.github.leonardofrs.funds_service.application.usecases.RetrieveTransactions;
 import io.github.leonardofrs.funds_service.domain.models.Transaction;
 import io.github.leonardofrs.funds_service.domain.gateway.transactions.CountTransactionsGateway;
@@ -24,6 +26,8 @@ public class DefaultRetrieveTransactions implements RetrieveTransactions {
 
   @Override
   public PageResult<Transaction> execute(UUID clientId, Page page) {
+    requireNonNull(clientId, "clientId is required");
+    requireNonNull(page, "page is required");
     long total = countTransactionsGateway.execute(clientId);
 
     if (total == 0) {

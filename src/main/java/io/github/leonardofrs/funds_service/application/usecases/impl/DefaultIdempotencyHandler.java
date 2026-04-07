@@ -6,7 +6,7 @@ import io.github.leonardofrs.funds_service.domain.exceptions.IdempotencyExceptio
 import io.github.leonardofrs.funds_service.domain.gateway.Idempotency.CreateIdempotencyGateway;
 import io.github.leonardofrs.funds_service.domain.gateway.Idempotency.RetrieveIdempotencyGateway;
 import io.github.leonardofrs.funds_service.domain.gateway.Idempotency.UpdateIdempotencyGateway;
-import io.github.leonardofrs.funds_service.domain.gateway.JsonSerializerGateway;
+import io.github.leonardofrs.funds_service.domain.gateway.ObjectSerializerGateway;
 import io.github.leonardofrs.funds_service.domain.models.Idempotency;
 import java.util.function.Supplier;
 
@@ -15,17 +15,17 @@ public class DefaultIdempotencyHandler implements IdempotencyHandler {
   private final CreateIdempotencyGateway createIdempotencyGateway;
   private final RetrieveIdempotencyGateway retrieveIdempotencyGateway;
   private final UpdateIdempotencyGateway updateIdempotencyGateway;
-  private final JsonSerializerGateway jsonSerializerGateway;
+  private final ObjectSerializerGateway objectSerializerGateway;
 
   public DefaultIdempotencyHandler(CreateIdempotencyGateway createIdempotencyGateway,
       RetrieveIdempotencyGateway retrieveIdempotencyGateway,
       UpdateIdempotencyGateway updateIdempotencyGateway,
-      JsonSerializerGateway jsonSerializerGateway
+      ObjectSerializerGateway objectSerializerGateway
   ) {
     this.createIdempotencyGateway = createIdempotencyGateway;
     this.retrieveIdempotencyGateway = retrieveIdempotencyGateway;
     this.updateIdempotencyGateway = updateIdempotencyGateway;
-    this.jsonSerializerGateway = jsonSerializerGateway;
+    this.objectSerializerGateway = objectSerializerGateway;
   }
 
   @Override
@@ -49,7 +49,7 @@ public class DefaultIdempotencyHandler implements IdempotencyHandler {
     }
 
     if (existing.isSuccess()) {
-      return jsonSerializerGateway.deserialize(existing.response(), responseType);
+      return objectSerializerGateway.deserialize(existing.response(), responseType);
     }
 
     if (existing.isProcessing()) {
@@ -65,7 +65,7 @@ public class DefaultIdempotencyHandler implements IdempotencyHandler {
     try {
       T result = operation.get();
 
-      String serialized = jsonSerializerGateway.serialize(result);
+      String serialized = objectSerializerGateway.serialize(result);
       updateIdempotencyGateway.execute(idempotency.success(serialized));
 
       return result;
