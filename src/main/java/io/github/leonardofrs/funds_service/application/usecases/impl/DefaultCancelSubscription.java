@@ -5,10 +5,10 @@ import static io.github.leonardofrs.funds_service.domain.constants.TransactionTy
 import static java.util.Objects.requireNonNull;
 
 import io.github.leonardofrs.funds_service.application.usecases.CancelSubscription;
+import io.github.leonardofrs.funds_service.application.usecases.SendNotification;
 import io.github.leonardofrs.funds_service.domain.constants.SubscriptionStatus;
 import io.github.leonardofrs.funds_service.application.dto.CancelSubscriptionData;
 import io.github.leonardofrs.funds_service.domain.exceptions.BusinessRuleException;
-import io.github.leonardofrs.funds_service.domain.gateway.notification.SendNotificationGateway;
 import io.github.leonardofrs.funds_service.domain.models.Client;
 import io.github.leonardofrs.funds_service.domain.models.Subscription;
 import io.github.leonardofrs.funds_service.domain.models.Transaction;
@@ -28,7 +28,7 @@ public class DefaultCancelSubscription implements CancelSubscription {
   private final CancelSubscriptionGateway cancelSubscriptionGateway;
   private final CreateTransactionGateway createTransactionGateway;
   private final TransactionalHandlerGateway transactionalHandlerGateway;
-  private final SendNotificationGateway sendNotificationGateway;
+  private final SendNotification sendNotification;
 
   public DefaultCancelSubscription(
       RetrieveSubscriptionGateway retrieveSubscriptionGateway,
@@ -37,7 +37,7 @@ public class DefaultCancelSubscription implements CancelSubscription {
       CancelSubscriptionGateway cancelSubscriptionGateway,
       CreateTransactionGateway createTransactionGateway,
       TransactionalHandlerGateway transactionalHandlerGateway,
-      SendNotificationGateway sendNotificationGateway
+      SendNotification sendNotification
   ) {
     this.retrieveSubscriptionGateway = retrieveSubscriptionGateway;
     this.retrieveClientGateway = retrieveClientGateway;
@@ -45,7 +45,7 @@ public class DefaultCancelSubscription implements CancelSubscription {
     this.cancelSubscriptionGateway = cancelSubscriptionGateway;
     this.createTransactionGateway = createTransactionGateway;
     this.transactionalHandlerGateway = transactionalHandlerGateway;
-    this.sendNotificationGateway = sendNotificationGateway;
+    this.sendNotification = sendNotification;
   }
 
   @Override
@@ -56,9 +56,12 @@ public class DefaultCancelSubscription implements CancelSubscription {
     Client client = retrieveClientGateway.execute(clientId);
 
     try {
-      return transactionalHandlerGateway.execute(() -> persistCancelSuccess(client, subscription,
-          cancelSubscriptionData.cancellationReason()));
-
+      Subscription currentSubscription = transactionalHandlerGateway.execute(
+          () -> persistCancelSuccess(client, subscription,
+              cancelSubscriptionData.cancellationReason()));
+      sendNotification.execute(client, currentSubscription.fundName(),
+          currentSubscription.amount());
+      return currentSubscription;
     } catch (BusinessRuleException e) {
       var transaction = Transaction.rejected(
           clientId,
@@ -95,7 +98,7 @@ public class DefaultCancelSubscription implements CancelSubscription {
     );
 
     cancelSubscriptionGateway.execute(cancelledSubscription, previousStatus);
-    updateClientGateway.execute(updatedClient);
+    updateClientGateway.execute(updatedClient, client.version());
     createTransactionGateway.execute(transaction);
 
     return cancelledSubscription;

@@ -1,6 +1,7 @@
 package io.github.leonardofrs.funds_service.domain.models;
 
 import static io.github.leonardofrs.funds_service.domain.assertions.Assertions.requireNonBlank;
+import static io.github.leonardofrs.funds_service.domain.assertions.Assertions.requireNonNegative;
 import static io.github.leonardofrs.funds_service.domain.assertions.Assertions.requirePositive;
 import static java.util.Objects.requireNonNullElse;
 
@@ -26,6 +27,7 @@ public record Client(UUID id,
 
   private static final BigDecimal INITIAL_BALANCE = new BigDecimal("500000");
   private static final String ERROR_AMOUNT_POSITIVE = "amount must be greater than zero";
+  private static final String ERROR_BALANCE_NEGATIVE = "balance must not be negative";
   private static final Long INITIAL_VERSION = 0L;
 
   public Client {
@@ -36,6 +38,7 @@ public record Client(UUID id,
     notificationChannels = List.copyOf(
         requireNonNullElse(notificationChannels, Collections.emptyList()));
     balance = requireNonNullElse(balance, INITIAL_BALANCE);
+    balance = requireNonNegative(balance, ERROR_BALANCE_NEGATIVE);
     status = requireNonNullElse(status, ClientStatus.ACTIVE);
     version = requireNonNullElse(version, INITIAL_VERSION);
     createdAt = requireNonNullElse(createdAt, Instant.now());

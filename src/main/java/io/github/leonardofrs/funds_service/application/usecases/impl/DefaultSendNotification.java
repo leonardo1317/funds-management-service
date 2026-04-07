@@ -24,8 +24,8 @@ public class DefaultSendNotification implements SendNotification {
   }
 
   @Override
-  public void execute(Client client, Fund fund, BigDecimal amount) {
-    String body = String.format(BODY_TEMPLATE, client.fullName(), amount, fund.name());
+  public void execute(Client client, String fundName, BigDecimal amount) {
+    String body = String.format(BODY_TEMPLATE, client.fullName(), amount, fundName);
 
     for (String channel : client.notificationChannels()) {
       try {

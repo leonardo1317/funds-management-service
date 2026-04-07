@@ -4,5 +4,5 @@ import io.github.leonardofrs.funds_service.domain.models.Client;
 
 public interface UpdateClientGateway {
 
-  Client execute(Client client);
+  Client execute(Client updatedClient, long currentVersion);
 }

@@ -69,7 +69,7 @@ public class BeanConfig {
       CancelSubscriptionGateway cancelSubscriptionGateway,
       CreateTransactionGateway createTransactionGateway,
       TransactionalHandlerGateway transactionalHandlerGateway,
-      SendNotificationGateway sendNotificationGateway
+      SendNotification sendNotification
   ) {
     return new DefaultCancelSubscription(
         retrieveSubscriptionGateway,
@@ -78,7 +78,7 @@ public class BeanConfig {
         cancelSubscriptionGateway,
         createTransactionGateway,
         transactionalHandlerGateway,
-        sendNotificationGateway
+        sendNotification
     );
   }
 

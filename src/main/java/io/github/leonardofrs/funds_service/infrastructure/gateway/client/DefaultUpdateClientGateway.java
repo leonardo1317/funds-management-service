@@ -24,26 +24,23 @@ public class DefaultUpdateClientGateway implements UpdateClientGateway {
   }
 
   @Override
-  public Client execute(Client client) {
-    var previousVersion = client.version() - 1;
+  public Client execute(Client updatedClient, long currentVersion) {
 
-    Query query = new Query(where("_id")
-        .is(client.id())
-        .and("version")
-        .is(previousVersion));
+    Query query = new Query(where("_id").is(updatedClient.id())
+        .and("version").is(currentVersion));
 
     Update update = new Update()
-        .set("balance", client.balance())
-        .set("version", client.version())
-        .set("updatedAt", client.updatedAt());
+        .set("balance", updatedClient.balance())
+        .set("updatedAt", updatedClient.updatedAt())
+        .inc("version", 1);
 
     UpdateResult result = mongoTemplate.updateFirst(query, update, ClientDocument.class);
 
     if (result.getModifiedCount() == 0) {
       throw new OptimisticLockingException(
-          "client '" + client.id() + "' was modified by another request, please retry");
+          "client '" + updatedClient.id() + "' was modified by another request, please retry");
     }
 
-    return client;
+    return updatedClient;
   }
 }

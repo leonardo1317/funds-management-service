@@ -1,6 +1,8 @@
 package io.github.leonardofrs.funds_service.domain.models;
 
 import static io.github.leonardofrs.funds_service.domain.assertions.Assertions.requireNonBlank;
+import static io.github.leonardofrs.funds_service.domain.assertions.Assertions.requireNonNegative;
+import static io.github.leonardofrs.funds_service.domain.assertions.Assertions.requirePositive;
 import static io.github.leonardofrs.funds_service.domain.constants.TransactionStatus.REJECTED;
 import static io.github.leonardofrs.funds_service.domain.constants.TransactionStatus.SUCCESS;
 import static java.util.Objects.requireNonNull;
@@ -38,8 +40,11 @@ public record Transaction(
     requireNonNull(movementType, "movementType is required");
     requireNonNull(status, "status is required");
     requireNonNull(amount, "amount is required");
+    amount = requirePositive(amount, "amount must be greater than zero");
     requireNonNull(balanceBefore, "balanceBefore is required");
+    balanceBefore = requireNonNegative(balanceBefore, "balanceBefore must not be negative");
     requireNonNull(balanceAfter, "balanceAfter is required");
+    balanceAfter = requireNonNegative(balanceAfter, "balanceAfter must not be negative");
     createdAt = requireNonNullElse(createdAt, Instant.now());
   }
 

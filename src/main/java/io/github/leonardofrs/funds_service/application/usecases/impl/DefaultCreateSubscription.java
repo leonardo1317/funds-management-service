@@ -69,12 +69,12 @@ public class DefaultCreateSubscription implements CreateSubscription {
         );
       }
 
-      Subscription subscription = transactionalHandlerGateway.execute(
+      Subscription currentSubscription = transactionalHandlerGateway.execute(
           () -> persistSuccessSubscription(client, fund, amount)
       );
 
-      sendNotification.execute(client, fund, amount);
-      return subscription;
+      sendNotification.execute(client, fund.name(), amount);
+      return currentSubscription;
     } catch (BusinessRuleException e) {
       var transaction = Transaction.rejected(
           client.id(),
@@ -98,7 +98,7 @@ public class DefaultCreateSubscription implements CreateSubscription {
         subscription.id(), SUBSCRIPTION, DEBIT, amount, client.balance(), updatedClient.balance());
 
     createSubscriptionGateway.execute(subscription);
-    updateClientGateway.execute(updatedClient);
+    updateClientGateway.execute(updatedClient, client.version());
     createTransactionGateway.execute(transaction);
 
     return subscription;

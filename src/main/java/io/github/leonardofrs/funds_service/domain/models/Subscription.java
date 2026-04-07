@@ -1,6 +1,7 @@
 package io.github.leonardofrs.funds_service.domain.models;
 
 import static io.github.leonardofrs.funds_service.domain.assertions.Assertions.requireNonBlank;
+import static io.github.leonardofrs.funds_service.domain.assertions.Assertions.requirePositive;
 import static io.github.leonardofrs.funds_service.domain.constants.SubscriptionStatus.ACTIVE;
 import static io.github.leonardofrs.funds_service.domain.constants.SubscriptionStatus.CANCELLED;
 import static java.util.Objects.requireNonNull;
@@ -28,6 +29,7 @@ public record Subscription(UUID id,
     requireNonNull(fundId, "fundId is required");
     requireNonBlank(fundName, "fundName is required");
     requireNonNull(amount, "amount is required");
+    amount = requirePositive(amount, "amount must be greater than zero");
     status = requireNonNullElse(status, ACTIVE);
     cancellationReason = requireNonNullElse(cancellationReason, "");
     createdAt = requireNonNullElse(createdAt, Instant.now());

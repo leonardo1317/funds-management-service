@@ -42,10 +42,10 @@ public class DefaultIdempotencyHandler implements IdempotencyHandler {
   private <T> T handleExisting(String key, String service, Supplier<T> operation,
       Class<T> responseType) {
     Idempotency existing = retrieveIdempotencyGateway.execute(key)
-        .orElseThrow(() -> new IdempotencyException(key, service, "Error de consistencia crítica"));
+        .orElseThrow(() -> new IdempotencyException(key, service, "Critical consistency error"));
 
     if (!existing.service().equals(service)) {
-      throw new IdempotencyException(key, service, "Llave ya utilizada en otro servicio");
+      throw new IdempotencyException(key, service, "Key already used in a different service.");
     }
 
     if (existing.isSuccess()) {
@@ -53,7 +53,7 @@ public class DefaultIdempotencyHandler implements IdempotencyHandler {
     }
 
     if (existing.isProcessing()) {
-      throw new IdempotencyException(key, service, "Operación en progreso. Intente nuevamente.");
+      throw new IdempotencyException(key, service, "Operation in progress. Please try again.");
     }
 
     var retryIdempotency = existing.processing();

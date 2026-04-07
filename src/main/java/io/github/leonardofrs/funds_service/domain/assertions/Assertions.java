@@ -15,7 +15,12 @@ public final class Assertions {
     }
     return value;
   }
-
+  public static BigDecimal requireNonNegative(BigDecimal value, String message) {
+    if (value == null || value.compareTo(BigDecimal.ZERO) < 0) {
+      throw new IllegalArgumentException(message);
+    }
+    return value;
+  }
   public static BigDecimal requirePositive(BigDecimal value, String message) {
     if (value == null || value.compareTo(BigDecimal.ZERO) <= 0) {
       throw new IllegalArgumentException(message);
