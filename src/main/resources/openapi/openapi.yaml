@@ -16,11 +16,10 @@ components:
       name: idempotency-Key
       in: header
       required: true
-      description: Clave UUID única para evitar duplicidad en peticiones POST.
+      description: Clave única (String) enviada por el cliente para evitar duplicidad.
       schema:
         type: string
-        format: uuid
-        example: "550e8400-e29b-41d4-a716-446655440000"
+        example: "REQ-2026-04-09-XYZ"
 
     XClientIdHeader:
       name: X-Client-Id
@@ -147,7 +146,6 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/FundResponse' }
-
   /subscriptions:
     post:
       summary: Subscribe to Fund
@@ -165,6 +163,37 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/SubscriptionResponse' }
+
+  /subscriptions/{subscriptionId}/cancel:
+    post:
+      summary: Cancel Subscription
+      tags: [ Subscription ]
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKeyHeader'
+        - $ref: '#/components/parameters/XClientIdHeader'
+        - name: subscriptionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: false # Hecho opcional por si solo se desea ejecutar la acción
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+                  example: "Cliente solicita cancelación"
+      responses:
+        '200':
+          description: Suscripción cancelada correctamente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubscriptionResponse'
 
   /transactions:
     get:
