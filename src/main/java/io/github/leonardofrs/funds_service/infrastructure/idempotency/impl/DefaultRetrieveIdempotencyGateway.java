@@ -1,8 +1,7 @@
-package io.github.leonardofrs.funds_service.infrastructure.gateway.idempotency;
+package io.github.leonardofrs.funds_service.infrastructure.idempotency.impl;
 
-import io.github.leonardofrs.funds_service.domain.gateway.Idempotency.RetrieveIdempotencyGateway;
-import io.github.leonardofrs.funds_service.domain.models.Idempotency;
-import io.github.leonardofrs.funds_service.infrastructure.gateway.documents.IdempotencyDocument;
+import io.github.leonardofrs.funds_service.infrastructure.idempotency.Idempotency;
+import io.github.leonardofrs.funds_service.infrastructure.idempotency.RetrieveIdempotencyGateway;
 import io.github.leonardofrs.funds_service.infrastructure.mappers.IdempotencyMapper;
 import java.util.Optional;
 import org.springframework.data.mongodb.core.MongoTemplate;

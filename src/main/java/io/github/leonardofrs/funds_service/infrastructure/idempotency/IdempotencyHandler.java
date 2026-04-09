@@ -1,4 +1,4 @@
-package io.github.leonardofrs.funds_service.application.usecases;
+package io.github.leonardofrs.funds_service.infrastructure.idempotency;
 
 import java.util.function.Supplier;
 

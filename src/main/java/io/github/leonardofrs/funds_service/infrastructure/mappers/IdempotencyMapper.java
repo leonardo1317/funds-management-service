@@ -1,7 +1,7 @@
 package io.github.leonardofrs.funds_service.infrastructure.mappers;
 
-import io.github.leonardofrs.funds_service.domain.models.Idempotency;
-import io.github.leonardofrs.funds_service.infrastructure.gateway.documents.IdempotencyDocument;
+import io.github.leonardofrs.funds_service.infrastructure.idempotency.Idempotency;
+import io.github.leonardofrs.funds_service.infrastructure.idempotency.impl.IdempotencyDocument;
 import org.mapstruct.Mapper;
 
 @Mapper(componentModel = "spring")

@@ -8,6 +8,9 @@ import io.github.leonardofrs.funds_service.domain.exceptions.ClientNotFoundExcep
 import io.github.leonardofrs.funds_service.domain.exceptions.ConflictException;
 import io.github.leonardofrs.funds_service.domain.exceptions.EmailAlreadyExistsException;
 import io.github.leonardofrs.funds_service.domain.exceptions.FundNotFoundException;
+import io.github.leonardofrs.funds_service.domain.exceptions.IdempotencyConsistencyException;
+import io.github.leonardofrs.funds_service.domain.exceptions.IdempotencyInProgressException;
+import io.github.leonardofrs.funds_service.domain.exceptions.IdempotencyInfrastructureException;
 import io.github.leonardofrs.funds_service.domain.exceptions.IllegalSubscriptionStateException;
 import io.github.leonardofrs.funds_service.domain.exceptions.InsufficientBalanceException;
 import io.github.leonardofrs.funds_service.domain.exceptions.MinimumAmountException;
@@ -204,6 +207,51 @@ public class ControllerExceptionHandler {
         request.getRequestURI()
     );
     return ResponseEntity.status(error.status()).body(error);
+  }
+
+  @ExceptionHandler(IdempotencyInProgressException.class)
+  public ResponseEntity<ApiError> handleIdempotencyInProgress(IdempotencyInProgressException ex,
+      HttpServletRequest request) {
+
+    var error = buildError(
+        "IDEMPOTENCY_IN_PROGRESS",
+        "An operation with the same key is already being processed. Please wait.",
+        HttpStatus.CONFLICT,
+        request.getRequestURI()
+    );
+
+    return ResponseEntity.status(error.status()).body(error);
+  }
+
+  @ExceptionHandler(IdempotencyInfrastructureException.class)
+  public ResponseEntity<ApiError> handleIdempotencyInfrastructure(
+      IdempotencyInfrastructureException ex,
+      HttpServletRequest request) {
+
+    var error = buildError(
+        "IDEMPOTENCY_INFRASTRUCTURE_ERROR",
+        "Business operation succeeded but state confirmation failed. Please verify the transaction status before retrying.",
+        HttpStatus.INTERNAL_SERVER_ERROR,
+        request.getRequestURI()
+    );
+
+    return ResponseEntity.status(error.status()).body(error);
+  }
+
+  @ExceptionHandler(IdempotencyConsistencyException.class)
+  public ResponseEntity<ApiError> handleIdempotencyConsistency(IdempotencyConsistencyException ex,
+      HttpServletRequest request) {
+
+    var error = buildError(
+        "IDEMPOTENCY_CONSISTENCY_ERROR",
+        "System encountered a data consistency issue",
+        HttpStatus.INTERNAL_SERVER_ERROR,
+        request.getRequestURI()
+    );
+
+    return ResponseEntity
+        .status(error.status())
+        .body(error);
   }
 
   @ExceptionHandler(NoSuchElementException.class)

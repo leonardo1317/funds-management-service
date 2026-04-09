@@ -6,7 +6,7 @@ import io.github.leonardofrs.funds_service.application.dto.CancelSubscriptionDat
 import io.github.leonardofrs.funds_service.application.dto.CreateSubscriptionData;
 import io.github.leonardofrs.funds_service.application.usecases.CancelSubscription;
 import io.github.leonardofrs.funds_service.application.usecases.CreateSubscription;
-import io.github.leonardofrs.funds_service.application.usecases.IdempotencyHandler;
+import io.github.leonardofrs.funds_service.infrastructure.idempotency.IdempotencyHandler;
 import io.github.leonardofrs.funds_service.domain.models.Subscription;
 import io.github.leonardofrs.funds_service.infrastructure.controllers.contract.CancelSubscriptionRequest;
 import io.github.leonardofrs.funds_service.infrastructure.controllers.contract.CreateSubscriptionRequest;

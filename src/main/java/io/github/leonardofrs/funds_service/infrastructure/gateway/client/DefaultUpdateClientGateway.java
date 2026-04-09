@@ -32,7 +32,7 @@ public class DefaultUpdateClientGateway implements UpdateClientGateway {
     Update update = new Update()
         .set("balance", updatedClient.balance())
         .set("updatedAt", updatedClient.updatedAt())
-        .inc("version", 1);
+        .set("version", updatedClient.version());
 
     UpdateResult result = mongoTemplate.updateFirst(query, update, ClientDocument.class);
 

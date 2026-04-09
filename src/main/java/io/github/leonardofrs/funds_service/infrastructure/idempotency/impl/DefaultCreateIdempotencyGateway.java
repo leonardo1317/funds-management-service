@@ -1,9 +1,8 @@
-package io.github.leonardofrs.funds_service.infrastructure.gateway.idempotency;
+package io.github.leonardofrs.funds_service.infrastructure.idempotency.impl;
 
-import io.github.leonardofrs.funds_service.domain.exceptions.IdempotencyAlreadyExistsException;
-import io.github.leonardofrs.funds_service.domain.gateway.Idempotency.CreateIdempotencyGateway;
-import io.github.leonardofrs.funds_service.domain.models.Idempotency;
-import io.github.leonardofrs.funds_service.infrastructure.gateway.documents.IdempotencyDocument;
+import io.github.leonardofrs.funds_service.domain.exceptions.DuplicateIdempotencyKeyException;
+import io.github.leonardofrs.funds_service.infrastructure.idempotency.CreateIdempotencyGateway;
+import io.github.leonardofrs.funds_service.infrastructure.idempotency.Idempotency;
 import io.github.leonardofrs.funds_service.infrastructure.mappers.IdempotencyMapper;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.data.mongodb.core.MongoTemplate;
@@ -26,7 +25,9 @@ public class DefaultCreateIdempotencyGateway implements CreateIdempotencyGateway
       IdempotencyDocument document = mapper.toIdempotencyDocument(idempotency);
       return mapper.toIdempotency(mongoTemplate.insert(document));
     } catch (DuplicateKeyException e) {
-      throw new IdempotencyAlreadyExistsException("Idempotency key already exists: " + idempotency.id(), e);
+      throw new DuplicateIdempotencyKeyException(
+          String.format("Idempotency key '%s' is already being used for service '%s'",
+              idempotency.id(), idempotency.service()), e);
     }
   }
 }

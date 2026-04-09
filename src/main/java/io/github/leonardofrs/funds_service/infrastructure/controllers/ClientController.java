@@ -3,7 +3,7 @@ package io.github.leonardofrs.funds_service.infrastructure.controllers;
 import static io.github.leonardofrs.funds_service.infrastructure.controllers.constants.Services.CLIENT;
 
 import io.github.leonardofrs.funds_service.application.usecases.CreateClient;
-import io.github.leonardofrs.funds_service.application.usecases.IdempotencyHandler;
+import io.github.leonardofrs.funds_service.infrastructure.idempotency.IdempotencyHandler;
 import io.github.leonardofrs.funds_service.domain.models.Client;
 import io.github.leonardofrs.funds_service.infrastructure.controllers.contract.ClientResponse;
 import io.github.leonardofrs.funds_service.infrastructure.controllers.contract.CreateClientRequest;
