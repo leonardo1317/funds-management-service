@@ -19,19 +19,34 @@ El diseño sigue una arquitectura **hexagonal (ports & adapters)**, separando cl
 ---
 
 ## Cómo ejecutar
+## 1. Opción recomendada: Docker
+### Requisitos
+- **Docker + Docker Compose**
+
+```bash
+git clone https://github.com/leonardo1317/funds-management-service.git
+cd funds-management-service
+```
+```bash
+docker compose up --build -d
+```
+## 2. Opción local
 
 ### Requisitos
 
 - **Java 17+**
 - **Gradle 8+**
-- **MongoDB** (puede ejecutarse en Docker)
+- **MongoDB** (ejecutándose localmente)
 
+### Ejecutar MongoDB
 ```bash
-docker run -d --name mongodb -p 27017:27017 mongo:latest --replSet rs0
+mongod --dbpath /your/data/path
 ```
-
-### Clonar y ejecutar
-
+### Configurar variable de entorno
+```bash
+export MONGODB_URI=mongodb://localhost:27017/funds_db
+```
+### Ejecutar aplicación
 ```bash
 git clone https://github.com/leonardo1317/funds-management-service.git
 cd funds-management-service

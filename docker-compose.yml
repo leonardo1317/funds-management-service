@@ -1,0 +1,47 @@
+version: '3.9'
+
+services:
+  mongodb:
+    image: mongo:7.0
+    container_name: mongodb
+    hostname: mongodb
+    command: ["mongod", "--replSet", "rs0", "--bind_ip_all"]
+    ports:
+      - "27017:27017"
+    networks:
+      - funds-net
+    volumes:
+      - mongo-data:/data/db
+    healthcheck:
+      test: >
+        echo 'try { rs.status().ok } catch (err) { 
+          rs.initiate({ 
+            _id: "rs0", 
+            members: [{ _id: 0, host: "mongodb:27017" }] 
+          }) 
+        }' | mongosh --quiet
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+
+  funds-app:
+    build: .
+    container_name: funds-app
+    ports:
+      - "8080:8080"
+    networks:
+      - funds-net
+    environment:
+      SPRING_DATA_MONGODB_URI: mongodb://mongodb:27017/funds_db?replicaSet=rs0
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    restart: unless-stopped
+
+networks:
+  funds-net:
+    driver: bridge
+
+volumes:
+  mongo-data:
