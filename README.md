@@ -18,50 +18,78 @@ El diseño sigue una arquitectura **hexagonal (ports & adapters)**, separando cl
 
 ---
 
-## Cómo ejecutar
-## 1. Opción recomendada: Docker
-### Requisitos
-- **Docker + Docker Compose**
-
+## Obtener el proyecto
 ```bash
 git clone https://github.com/leonardo1317/funds-management-service.git
 cd funds-management-service
 ```
-```bash
-docker compose up --build -d
-```
-## 2. Opción local
 
+## Cómo ejecutar
+## 1. Opción local
 ### Requisitos
-
 - **Java 17+**
 - **Gradle 8+**
 - **MongoDB** (ejecutándose localmente)
 
-### Ejecutar MongoDB
 ```bash
 mongod --dbpath /your/data/path
-```
-### Configurar variable de entorno
-```bash
 export MONGODB_URI=mongodb://localhost:27017/funds_db
-```
-### Ejecutar aplicación
-```bash
-git clone https://github.com/leonardo1317/funds-management-service.git
-cd funds-management-service
 ./gradlew bootRun
 ```
 
+## 2. Opción recomendada: Docker
+### Requisitos
+- **Docker + Docker Compose**
+### Levantar aplicación
+```bash
+docker compose up --build -d
+```
+### Detener y eliminar contenedores (opcional)
+```bash
+docker compose down
+```
 La API se iniciará en: http://localhost:8080
 
----
+## 3. Opción AWS (CloudFormation + EC2)
+
+```bash
+aws --version
+aws configure
+```
+### Crear infraestructura
+```bash
+aws cloudformation create-stack \
+  --stack-name funds-service-stack \
+  --template-body file://cloudformation.yaml \
+  --capabilities CAPABILITY_NAMED_IAM \
+  --region us-east-1
+```
+### Ver estado del stack
+```bash
+aws cloudformation describe-stacks \
+  --stack-name funds-service-stack
+```
+### Obtener IP pública
+```bash
+aws ec2 describe-instances \
+  --query "Reservations[*].Instances[*].PublicIpAddress" \
+  --output text
+```
+### Acceder a la aplicación
+```bash
+http://<EC2_PUBLIC_IP>:8080
+```
+### Eliminar stack (opcional)
+```bash
+aws cloudformation delete-stack \
+  --stack-name funds-service-stack
+```
 
 ## Variables de entorno
 
 | Variable                 | Descripción |
 |--------------------------|-------------|
-| `MONGODB_URI`            | URI de conexión a MongoDB (default `${MONGODB_URI:mongodb://localhost:27017/funds_db?replicaSet=rs0}`) |
+| `MONGODB_URI`            | URI de conexión a MongoDB |
 ---
 
 ## Base de datos (MongoDB)
