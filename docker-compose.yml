@@ -6,8 +6,6 @@ services:
     container_name: mongodb
     hostname: mongodb
     command: ["mongod", "--replSet", "rs0", "--bind_ip_all"]
-    ports:
-      - "27017:27017"
     networks:
       - funds-net
     volumes:
@@ -33,7 +31,7 @@ services:
     networks:
       - funds-net
     environment:
-      SPRING_DATA_MONGODB_URI: mongodb://mongodb:27017/funds_db?replicaSet=rs0
+      MONGODB_URI: mongodb://mongodb:27017/funds_db?replicaSet=rs0
     depends_on:
       mongodb:
         condition: service_healthy

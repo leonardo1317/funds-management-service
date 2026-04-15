@@ -3,7 +3,7 @@ spring:
     name: funds-service
   data:
     mongodb:
-      uri: ${MONGODB_URI:mongodb://localhost:27017/funds_db}
+      uri: ${MONGODB_URI}
       auto-index-creation: true
 
 springdoc:
