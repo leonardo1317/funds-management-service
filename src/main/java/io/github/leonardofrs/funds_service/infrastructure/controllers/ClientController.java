@@ -37,13 +37,13 @@ public class ClientController {
       @RequestHeader("idempotency-Key") String idempotencyKey,
       @RequestBody CreateClientRequest createClientRequest) {
     Client client = clientMapper.toClient(createClientRequest);
-    Client savedClient = idempotencyHandler.execute(
+    ClientResponse clientResponse = idempotencyHandler.execute(
         idempotencyKey,
         CLIENT.name(),
-        () -> createClient.execute(client),
-        Client.class
+        () -> clientMapper.toClientResponse(createClient.execute(client)),
+        ClientResponse.class
     );
-    return ResponseEntity.ok(clientMapper.toClientResponse(savedClient));
+    return ResponseEntity.ok(clientResponse);
   }
 
 }

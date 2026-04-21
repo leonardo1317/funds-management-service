@@ -38,13 +38,13 @@ public class FundController {
       @RequestBody CreateFundRequest createFundRequest) {
     Fund fund = fundMapper.toFund(createFundRequest);
 
-    Fund savedFund = idempotencyHandler.execute(
+    FundResponse fundResponse = idempotencyHandler.execute(
         idempotencyKey,
         FUND.name(),
-        () -> createFund.execute(fund),
-        Fund.class
+        () -> fundMapper.toFundResponse(createFund.execute(fund)),
+        FundResponse.class
     );
 
-    return ResponseEntity.ok(fundMapper.toFundResponse(savedFund));
+    return ResponseEntity.ok(fundResponse);
   }
 }

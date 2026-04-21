@@ -7,7 +7,6 @@ import io.github.leonardofrs.funds_service.application.dto.CreateSubscriptionDat
 import io.github.leonardofrs.funds_service.application.usecases.CancelSubscription;
 import io.github.leonardofrs.funds_service.application.usecases.CreateSubscription;
 import io.github.leonardofrs.funds_service.infrastructure.idempotency.IdempotencyHandler;
-import io.github.leonardofrs.funds_service.domain.models.Subscription;
 import io.github.leonardofrs.funds_service.infrastructure.controllers.contract.CancelSubscriptionRequest;
 import io.github.leonardofrs.funds_service.infrastructure.controllers.contract.CreateSubscriptionRequest;
 import io.github.leonardofrs.funds_service.infrastructure.controllers.contract.SubscriptionResponse;
@@ -51,14 +50,15 @@ public class SubscriptionController {
     CreateSubscriptionData createSubscriptionData = subscriptionMapper.toCreateSubscriptionData(
         createSubscriptionRequest);
 
-    Subscription savedSubscription = idempotencyHandler.execute(
+    SubscriptionResponse subscriptionResponse = idempotencyHandler.execute(
         idempotencyKey,
         SUBSCRIPTION.name(),
-        () -> createSubscription.execute(clientId, createSubscriptionData),
-        Subscription.class
+        () -> subscriptionMapper.toSubscriptionResponse(
+            createSubscription.execute(clientId, createSubscriptionData)),
+        SubscriptionResponse.class
     );
 
-    return ResponseEntity.ok(subscriptionMapper.toSubscriptionResponse(savedSubscription));
+    return ResponseEntity.ok(subscriptionResponse);
 
   }
 
@@ -71,13 +71,14 @@ public class SubscriptionController {
     CancelSubscriptionData cancelSubscriptionData = subscriptionMapper.toCancelSubscriptionData(
         cancelSubscriptionRequest);
 
-    Subscription savedSubscription = idempotencyHandler.execute(
+    SubscriptionResponse subscriptionResponse = idempotencyHandler.execute(
         idempotencyKey,
         SUBSCRIPTION.name(),
-        () -> cancelSubscription.execute(clientId, subscriptionId, cancelSubscriptionData),
-        Subscription.class
+        () -> subscriptionMapper.toSubscriptionResponse(
+            cancelSubscription.execute(clientId, subscriptionId, cancelSubscriptionData)),
+        SubscriptionResponse.class
     );
 
-    return ResponseEntity.ok(subscriptionMapper.toSubscriptionResponse(savedSubscription));
+    return ResponseEntity.ok(subscriptionResponse);
   }
 }
